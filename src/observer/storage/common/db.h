@@ -45,9 +45,12 @@ private:
   RC open_all_tables();
 
 private:
+  // db name
   std::string name_;
+  // db store path
   std::string path_;
-  std::unordered_map<std::string, Table *> opened_tables_;
+  // opened tables
+  std::unordered_map<std::string/*table name*/, Table/*table struct*/ *> opened_tables_;
 };
 
 #endif  // __OBSERVER_STORAGE_COMMON_DB_H__

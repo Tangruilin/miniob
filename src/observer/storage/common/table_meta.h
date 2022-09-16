@@ -55,6 +55,11 @@ public:
 
 public:
   int serialize(std::ostream &os) const override;
+  /**
+   * Deserialize table from stream
+   * @param is in stream
+   * @return -1 means deserialize failed
+   */
   int deserialize(std::istream &is) override;
   int get_serial_size() const override;
   void to_string(std::string &output) const override;
@@ -64,10 +69,13 @@ protected:
   static RC init_sys_fields();
 
 protected:
+  // table name
   std::string name_;
+  // fields(include sys_fields)
   std::vector<FieldMeta> fields_;  // 包含sys_fields
+  // all indexes
   std::vector<IndexMeta> indexes_;
-
+  // a record size
   int record_size_ = 0;
 
   //@@@ TODO why used static variable?

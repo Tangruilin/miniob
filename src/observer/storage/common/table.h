@@ -101,6 +101,11 @@ private:
   RC delete_entry_of_indexes(const char *record, const RID &rid, bool error_on_not_exists);
 
 private:
+  /**
+   * Init records for this table from data file(tableName.data), and init some resource, such as buffer pool and frames...
+   * @param base_dir the base dir for this table
+   * @return RC
+   */
   RC init_record_handler(const char *base_dir);
   RC make_record(int value_num, const Value *values, char *&record_out);
 
@@ -109,10 +114,13 @@ public:
   Index *find_index_by_field(const char *field_name) const;
 
 private:
+  // table base dir
   std::string base_dir_;
+  // table meta data, include field meta
   TableMeta table_meta_;
   DiskBufferPool *data_buffer_pool_ = nullptr;  /// 数据文件关联的buffer pool
   RecordFileHandler *record_handler_ = nullptr;  /// 记录操作
+  // indexes in this table
   std::vector<Index *> indexes_;
 };
 

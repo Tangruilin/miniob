@@ -34,6 +34,7 @@ class DiskBufferPool;
 
 //
 #define BP_INVALID_PAGE_NUM (-1)
+// a page cost 2^13 bytes, 8kb
 #define BP_PAGE_SIZE (1 << 13)
 #define BP_PAGE_DATA_SIZE (BP_PAGE_SIZE - sizeof(PageNum))
 #define BP_FILE_SUB_HDR_SIZE (sizeof(BPFileSubHeader))
@@ -223,6 +224,11 @@ public:
   RC flush_all_pages();
 
 protected:
+  /**
+   * allocate a frame in frame manasger
+   * @param buf
+   * @return
+   */
   RC allocate_frame(Frame **buf);
 
   /**
@@ -237,7 +243,9 @@ protected:
   RC load_page(PageNum page_num, Frame *frame);
 
 private:
+  // buffer pool manager pointer
   BufferPoolManager &bp_manager_;
+  // buffer pool frame manager
   BPFrameManager &   frame_manager_;
   std::string        file_name_;
   int                file_desc_ = -1;
@@ -256,6 +264,12 @@ public:
   ~BufferPoolManager();
 
   RC create_file(const char *file_name);
+  /**
+   * Open a file and attach it to target bp
+   * @param file_name table data file name
+   * @param bp diskBufferPool
+   * @return RC
+   */
   RC open_file(const char *file_name, DiskBufferPool *&bp);
   RC close_file(const char *file_name);
 

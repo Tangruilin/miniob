@@ -149,6 +149,7 @@ RC DiskBufferPool::open_file(const char *file_name)
   file_desc_ = fd;
 
   RC rc = RC::SUCCESS;
+  // allocate frame from frame manager
   rc = allocate_frame(&hdr_frame_);
   if (rc != RC::SUCCESS) {
     LOG_ERROR("failed to allocate frame for header. file name %s", file_name_.c_str());
@@ -161,6 +162,7 @@ RC DiskBufferPool::open_file(const char *file_name)
   hdr_frame_->file_desc_ = fd;
   hdr_frame_->pin_count_ = 1;
   hdr_frame_->acc_time_ = current_time();
+  // load the first page from file
   if ((rc = load_page(BP_HEADER_PAGE, hdr_frame_)) != RC::SUCCESS) {
     LOG_ERROR("Failed to load first page of %s, due to %s.", file_name, strerror(errno));
     hdr_frame_->pin_count_ = 0;
@@ -170,6 +172,7 @@ RC DiskBufferPool::open_file(const char *file_name)
     return rc;
   }
 
+  // get the data from first page
   file_header_ = (BPFileHeader *)hdr_frame_->data();
 
   LOG_INFO("Successfully open %s. file_desc=%d, hdr_frame=%p", file_name, file_desc_, hdr_frame_);
@@ -444,18 +447,21 @@ RC DiskBufferPool::flush_all_pages()
 
 RC DiskBufferPool::allocate_frame(Frame **buffer)
 {
+  // allocate a file in frame manager
   Frame *frame = frame_manager_.alloc();
   if (frame != nullptr) {
     *buffer = frame;
     return RC::SUCCESS;
   }
 
+  // if allocate from free list failed, we can purge an unpin frame, and get the enough memory
   frame = frame_manager_.begin_purge();
   if (frame == nullptr) {
     LOG_ERROR("All pages have been used and pinned.");
     return RC::NOMEM;
   }
 
+  // if dirty, flush this page to disk
   if (frame->dirty_) {
     RC rc = bp_manager_.flush_page(*frame);
     if (rc != RC::SUCCESS) {
@@ -464,6 +470,7 @@ RC DiskBufferPool::allocate_frame(Frame **buffer)
     }
   }
 
+  // mark this frame modified
   frame_manager_.mark_modified(frame);
 
   *buffer = frame;
@@ -573,21 +580,23 @@ RC BufferPoolManager::create_file(const char *file_name)
 RC BufferPoolManager::open_file(const char *_file_name, DiskBufferPool *& _bp)
 {
   std::string file_name(_file_name);
-  
+
   if (buffer_pools_.find(file_name) != buffer_pools_.end()) {
     LOG_WARN("file already opened. file name=%s", _file_name);
     return RC::BUFFERPOOL_OPEN;
   }
-
+  // init a DiskBufferPool if this table has never been opened
   DiskBufferPool *bp = new DiskBufferPool(*this, frame_manager_);
+  // open a data file in buffer pool
   RC rc = bp->open_file(_file_name);
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to open file name");
     delete bp;
     return rc;
   }
-
+  // insert this <table_data_file_name, diskBufferPool>
   buffer_pools_.insert(std::pair<std::string, DiskBufferPool *>(file_name, bp));
+  // insert this <table_data_file_desc, diskBufferPool>
   fd_buffer_pools_.insert(std::pair<int, DiskBufferPool *>(bp->file_desc(), bp));
   _bp = bp;
   return RC::SUCCESS;

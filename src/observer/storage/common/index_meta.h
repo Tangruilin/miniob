@@ -39,6 +39,13 @@ public:
 
 public:
   void to_json(Json::Value &json_value) const;
+  /**
+   * Parse index meta from json
+   * @param table
+   * @param json_value
+   * @param index
+   * @return
+   */
   static RC from_json(const TableMeta &table, const Json::Value &json_value, IndexMeta &index);
 
 protected:

@@ -308,6 +308,7 @@ T *MemPoolSimple<T>::alloc()
 {
   MUTEX_LOCK(&this->mutex);
   if (frees.empty() == true) {
+    // empty frees and abandon dynamic allocate, return npt
     if (this->dynamic == false) {
       MUTEX_UNLOCK(&this->mutex);
       return nullptr;
@@ -318,9 +319,11 @@ T *MemPoolSimple<T>::alloc()
       return nullptr;
     }
   }
+  // get a free buffer
   T *buffer = frees.front();
   frees.pop_front();
 
+  // mark this buffer as used
   used.insert(buffer);
   lru_used.push_back(buffer);
 

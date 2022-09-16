@@ -32,7 +32,12 @@ Db::~Db()
   }
   LOG_INFO("Db has been closed: %s", name_.c_str());
 }
-
+/**
+ * Init database with db name and db file path
+ * @param name
+ * @param dbpath
+ * @return RC
+ */
 RC Db::init(const char *name, const char *dbpath)
 {
 
@@ -52,6 +57,13 @@ RC Db::init(const char *name, const char *dbpath)
   return open_all_tables();
 }
 
+/**
+ *
+ * @param table_name
+ * @param attribute_count
+ * @param attributes
+ * @return
+ */
 RC Db::create_table(const char *table_name, int attribute_count, const AttrInfo *attributes)
 {
   RC rc = RC::SUCCESS;
@@ -87,6 +99,7 @@ Table *Db::find_table(const char *table_name) const
 
 RC Db::open_all_tables()
 {
+  // list all table meta file in db path
   std::vector<std::string> table_meta_files;
   int ret = common::list_file(path_.c_str(), TABLE_META_FILE_PATTERN, table_meta_files);
   if (ret < 0) {
@@ -97,6 +110,7 @@ RC Db::open_all_tables()
   RC rc = RC::SUCCESS;
   for (const std::string &filename : table_meta_files) {
     Table *table = new Table();
+    // open a table, load data from table file(xxx.table)
     rc = table->open(filename.c_str(), path_.c_str());
     if (rc != RC::SUCCESS) {
       delete table;

@@ -128,6 +128,7 @@ RC Table::open(const char *meta_file, const char *base_dir)
     LOG_ERROR("Failed to open meta file for read. file name=%s, errmsg=%s", meta_file_path.c_str(), strerror(errno));
     return RC::IOERR;
   }
+  // deserialize the table file(xxx.table) and get the metadata about this table(fields info, indexes info)
   if (table_meta_.deserialize(fs) < 0) {
     LOG_ERROR("Failed to deserialize table meta. file name=%s", meta_file_path.c_str());
     fs.close();
@@ -135,7 +136,7 @@ RC Table::open(const char *meta_file, const char *base_dir)
   }
   fs.close();
 
-  // 加载数据文件
+  // load data file and load some page into buffer pool, such as header page...
   RC rc = init_record_handler(base_dir);
   if (rc != RC::SUCCESS) {
     LOG_ERROR("Failed to open table %s due to init record handler failed.", base_dir);
@@ -158,9 +159,11 @@ RC Table::open(const char *meta_file, const char *base_dir)
       //  do all cleanup action in destructive Table function
       return RC::GENERIC_ERROR;
     }
-
+    // create b+ tree for this index
     BplusTreeIndex *index = new BplusTreeIndex();
+    // generate index file name({table_name}-{index_name}.index)
     std::string index_file = table_index_file(base_dir, name(), index_meta->name());
+    // open the index file, and init some related resources
     rc = index->open(index_file.c_str(), *index_meta, *field_meta);
     if (rc != RC::SUCCESS) {
       delete index;
@@ -342,14 +345,17 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out)
 
 RC Table::init_record_handler(const char *base_dir)
 {
+  // generate data file name
   std::string data_file = table_data_file(base_dir, table_meta_.name());
 
+  // open file through buffer pool
   RC rc = BufferPoolManager::instance().open_file(data_file.c_str(), data_buffer_pool_);
   if (rc != RC::SUCCESS) {
     LOG_ERROR("Failed to open disk buffer pool for file:%s. rc=%d:%s", data_file.c_str(), rc, strrc(rc));
     return rc;
   }
 
+  // init record handler
   record_handler_ = new RecordFileHandler();
   rc = record_handler_->init(data_buffer_pool_);
   if (rc != RC::SUCCESS) {

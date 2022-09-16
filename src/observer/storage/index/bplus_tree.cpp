@@ -832,6 +832,7 @@ RC BplusTreeHandler::open(const char *file_name)
     return RC::RECORD_OPENNED;
   }
 
+  // generate a buffer pool
   BufferPoolManager &bpm = BufferPoolManager::instance();
   DiskBufferPool *disk_buffer_pool;
   RC rc = bpm.open_file(file_name, disk_buffer_pool);
@@ -840,6 +841,7 @@ RC BplusTreeHandler::open(const char *file_name)
     return rc;
   }
 
+  // load first page into buffer pool
   Frame *frame;
   rc = disk_buffer_pool->get_this_page(FIRST_INDEX_PAGE, &frame);
   if (rc != RC::SUCCESS) {
@@ -848,6 +850,7 @@ RC BplusTreeHandler::open(const char *file_name)
     return rc;
   }
 
+  // cast this first page to IndexFileHeader data
   char *pdata = frame->data();
   memcpy(&file_header_, pdata, sizeof(IndexFileHeader));
   header_dirty_ = false;
