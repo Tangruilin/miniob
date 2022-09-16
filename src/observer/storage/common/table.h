@@ -65,6 +65,12 @@ public:
 
   RC get_record_scanner(RecordFileScanner &scanner);
 
+  /**
+   * Release all mem usage and delete the table related file
+   * @return
+   */
+  RC destroy();
+
   RecordFileHandler *record_handler() const
   {
     return record_handler_;

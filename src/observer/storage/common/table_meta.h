@@ -32,6 +32,13 @@ public:
 
   void swap(TableMeta &other) noexcept;
 
+  /**
+   * init table meta from attributes
+   * @param name
+   * @param field_num
+   * @param attributes
+   * @return
+   */
   RC init(const char *name, int field_num, const AttrInfo attributes[]);
 
   RC add_index(const IndexMeta &index);

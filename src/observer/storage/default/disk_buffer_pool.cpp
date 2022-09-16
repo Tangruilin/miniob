@@ -551,6 +551,7 @@ RC BufferPoolManager::create_file(const char *file_name)
     return RC::IOERR_ACCESS;
   }
 
+  // init first page(BPFileHeader) and write it to xxx.data file
   Page page;
   memset(&page, 0, sizeof(Page));
 

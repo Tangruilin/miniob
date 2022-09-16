@@ -88,6 +88,31 @@ RC Db::create_table(const char *table_name, int attribute_count, const AttrInfo 
   return RC::SUCCESS;
 }
 
+RC Db::drop_table(const char *table_name)
+{
+  RC rc = RC::SUCCESS;
+  // check table opened
+  auto it = opened_tables_.find(table_name);
+  if (it == opened_tables_.end()) {
+    // table not exist
+    LOG_WARN("%s hasn't been open before.", table_name);
+    return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+
+  // get table
+  Table *table = it->second;
+  // let this table destroy itself
+  rc = table->destroy();
+  if (rc != SUCCESS) {
+    LOG_WARN("%s try to destroy itself failed", table_name);
+    return rc;
+  }
+  // remove this table from opened_tables
+  this->opened_tables_.erase(it);
+  delete table;
+  return rc;
+}
+
 Table *Db::find_table(const char *table_name) const
 {
   std::unordered_map<std::string, Table *>::const_iterator iter = opened_tables_.find(table_name);
@@ -145,7 +170,6 @@ void Db::all_tables(std::vector<std::string> &table_names) const
     table_names.emplace_back(table_item.first);
   }
 }
-
 RC Db::sync()
 {
   RC rc = RC::SUCCESS;

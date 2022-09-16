@@ -152,6 +152,9 @@ class DiskBufferPool
 {
 public:
   DiskBufferPool(BufferPoolManager &bp_manager, BPFrameManager &frame_manager);
+  /**
+   * release mem usage and purge all pages in this bp
+   */
   ~DiskBufferPool();
 
   /**
