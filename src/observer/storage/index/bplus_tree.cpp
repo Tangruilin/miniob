@@ -1396,6 +1396,7 @@ char *BplusTreeHandler::make_key(const char *user_key, const RID &rid)
     LOG_WARN("Failed to alloc memory for key.");
     return nullptr;
   }
+  // key layout:  |index_attr|rid|
   memcpy(key, user_key, file_header_.attr_length);
   memcpy(key + file_header_.attr_length, &rid, sizeof(rid));
   return key;
@@ -1424,6 +1425,7 @@ RC BplusTreeHandler::insert_entry(const char *user_key, const RID *rid)
   }
 
   Frame *frame;
+  // find leaf page
   RC rc = find_leaf(key, frame);
   if (rc != RC::SUCCESS) {
     LOG_WARN("Failed to find leaf %s. rc=%d:%s", rid->to_string().c_str(), rc, strrc(rc));
@@ -1431,6 +1433,7 @@ RC BplusTreeHandler::insert_entry(const char *user_key, const RID *rid)
     return rc;
   }
 
+  // insert this index entry to leaf node
   rc = insert_entry_into_leaf_node(frame, key, rid);
   if (rc != RC::SUCCESS) {
     LOG_TRACE("Failed to insert into leaf of index, rid:%s", rid->to_string().c_str());

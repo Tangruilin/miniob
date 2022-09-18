@@ -273,6 +273,7 @@ RC Table::insert_record(Trx *trx, Record *record)
   if (trx != nullptr) {
     trx->init_trx_info(this, *record);
   }
+  // insert the record in mem
   rc = record_handler_->insert_record(record->data(), table_meta_.record_size(), &record->rid());
   if (rc != RC::SUCCESS) {
     LOG_ERROR("Insert record failed. table name=%s, rc=%d:%s", table_meta_.name(), rc, strrc(rc));
@@ -280,10 +281,11 @@ RC Table::insert_record(Trx *trx, Record *record)
   }
 
   if (trx != nullptr) {
+    // insert record in trx
     rc = trx->insert_record(this, record);
     if (rc != RC::SUCCESS) {
       LOG_ERROR("Failed to log operation(insertion) to trx");
-
+      // insert failed, just delete it
       RC rc2 = record_handler_->delete_record(&record->rid());
       if (rc2 != RC::SUCCESS) {
         LOG_ERROR("Failed to rollback record data when insert index entries failed. table name=%s, rc=%d:%s",
@@ -295,6 +297,7 @@ RC Table::insert_record(Trx *trx, Record *record)
     }
   }
 
+  // insert this record in index
   rc = insert_entry_of_indexes(record->data(), record->rid());
   if (rc != RC::SUCCESS) {
     RC rc2 = delete_entry_of_indexes(record->data(), record->rid(), true);
@@ -767,6 +770,7 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid)
 {
   RC rc = RC::SUCCESS;
   for (Index *index : indexes_) {
+    // insert to index
     rc = index->insert_entry(record, &rid);
     if (rc != RC::SUCCESS) {
       break;
