@@ -322,6 +322,7 @@ RC Table::insert_record(Trx *trx, int value_num, const Value *values)
     return RC::INVALID_ARGUMENT;
   }
 
+  // get record bytes from values
   char *record_data;
   RC rc = make_record(value_num, values, record_data);
   if (rc != RC::SUCCESS) {

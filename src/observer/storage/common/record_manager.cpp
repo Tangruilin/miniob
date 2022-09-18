@@ -285,6 +285,7 @@ RC RecordFileHandler::insert_record(const char *data, int record_size, RID *rid)
   PageNum current_page_num = 0;
   while (bp_iterator.has_next()) {
     current_page_num = bp_iterator.next();
+    // load this page from buffer pool
     ret = record_page_handler.init(*disk_buffer_pool_, current_page_num);
     if (ret != RC::SUCCESS) {
       LOG_WARN("failed to init record page handler. page num=%d, rc=%d:%s", current_page_num, ret, strrc(ret));
@@ -307,6 +308,7 @@ RC RecordFileHandler::insert_record(const char *data, int record_size, RID *rid)
     }
 
     current_page_num = frame->page_num();
+    // init a empty page
     ret = record_page_handler.init_empty_page(*disk_buffer_pool_, current_page_num, record_size);
     if (ret != RC::SUCCESS) {
       LOG_ERROR("Failed to init empty page. ret:%d", ret);

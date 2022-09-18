@@ -52,6 +52,13 @@ public:
    */
   RC open(const char *meta_file, const char *base_dir);
 
+  /**
+   * Insert a record to this table
+   * @param trx
+   * @param value_num
+   * @param values
+   * @return
+   */
   RC insert_record(Trx *trx, int value_num, const Value *values);
   RC update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num,
       const Condition conditions[], int *updated_count);
@@ -97,6 +104,12 @@ private:
   IndexScanner *find_index_for_scan(const ConditionFilter *filter);
   IndexScanner *find_index_for_scan(const DefaultConditionFilter &filter);
 
+  /**
+   * Insert a record
+   * @param trx
+   * @param record
+   * @return
+   */
   RC insert_record(Trx *trx, Record *record);
 
 private:

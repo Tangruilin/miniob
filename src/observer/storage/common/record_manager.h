@@ -65,6 +65,12 @@ class RecordPageHandler {
 public:
   RecordPageHandler() = default;
   ~RecordPageHandler();
+  /**
+   * Init this record page from buffer pool by page num
+   * @param buffer_pool
+   * @param page_num
+   * @return
+   */
   RC init(DiskBufferPool &buffer_pool, PageNum page_num);
   RC init_empty_page(DiskBufferPool &buffer_pool, PageNum page_num, int record_size);
   RC cleanup();

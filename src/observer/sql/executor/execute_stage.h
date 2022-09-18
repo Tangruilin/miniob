@@ -38,6 +38,10 @@ protected:
   void handle_event(common::StageEvent *event) override;
   void callback_event(common::StageEvent *event, common::CallbackContext *context) override;
 
+  /**
+   * Handle the sql event
+   * @param event
+   */
   void handle_request(common::StageEvent *event);
   RC do_help(SQLStageEvent *session_event);
   RC do_create_table(SQLStageEvent *sql_event);
