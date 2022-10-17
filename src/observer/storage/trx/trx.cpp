@@ -93,6 +93,11 @@ RC Trx::insert_record(Table *table, Record *record)
   return rc;
 }
 
+RC Trx::update_record(Table *table, Record *record)
+{
+  return RC::SUCCESS;
+}
+
 RC Trx::delete_record(Table *table, Record *record)
 {
   RC rc = RC::SUCCESS;

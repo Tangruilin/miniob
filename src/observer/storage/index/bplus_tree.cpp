@@ -1345,6 +1345,7 @@ RC BplusTreeHandler::create_new_tree(const char *key, const RID *rid)
     return rc;
   }
 
+  // allocate a page
   Frame *frame;
   rc = disk_buffer_pool_->allocate_page(&frame);
   if (rc != RC::SUCCESS) {
@@ -1352,6 +1353,7 @@ RC BplusTreeHandler::create_new_tree(const char *key, const RID *rid)
     return rc;
   }
 
+  // generate a leaf node handler
   LeafIndexNodeHandler leaf_node(file_header_, frame);
   leaf_node.init_empty();
   leaf_node.insert(0, key, (const char *)rid);

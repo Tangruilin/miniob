@@ -44,6 +44,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/default/default_handler.h"
 #include "storage/common/condition_filter.h"
 #include "storage/trx/trx.h"
+#include "sql/operator/update_operator.h"
 #include "storage/clog/clog.h"
 
 using namespace common;
@@ -143,7 +144,7 @@ void ExecuteStage::handle_request(common::StageEvent *event)
       do_insert(sql_event);
     } break;
     case StmtType::UPDATE: {
-      //do_update((UpdateStmt *)stmt, session_event);
+      do_update(sql_event);
     } break;
     case StmtType::DELETE: {
       do_delete(sql_event);
@@ -575,7 +576,7 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
       if (rc != RC::SUCCESS) {
         session_event->set_response("FAILURE\n");
         return rc;
-      } 
+      }
 
       trx->next_current_id();
       session_event->set_response("SUCCESS\n");
@@ -588,6 +589,30 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
   return rc;
 }
 
+RC ExecuteStage::do_update(SQLStageEvent *sql_event)
+{
+  Stmt *stmt = sql_event->stmt();
+  SessionEvent *session_event = sql_event->session_event();
+
+  if (stmt == nullptr) {
+    LOG_WARN("cannot find statement");
+    return RC::GENERIC_ERROR;
+  }
+  UpdateStmt *update_stmt = (UpdateStmt *)stmt;
+  Table *table = update_stmt->table();
+  TableScanOperator scan_oper(table);
+  PredicateOperator pred_oper(update_stmt->filter_stmt());
+  pred_oper.add_child(&scan_oper);
+  UpdateOperator update_oper(update_stmt);
+  update_oper.add_child(&pred_oper);
+  RC rc = update_oper.open();
+  if (rc == RC::SUCCESS) {
+    session_event->set_response("SUCCESS\n");
+  } else {
+    session_event->set_response("FAILURE\n");
+  }
+  return rc;
+}
 RC ExecuteStage::do_delete(SQLStageEvent *sql_event)
 {
   Stmt *stmt = sql_event->stmt();
@@ -626,7 +651,7 @@ RC ExecuteStage::do_delete(SQLStageEvent *sql_event)
       if (rc != RC::SUCCESS) {
         session_event->set_response("FAILURE\n");
         return rc;
-      } 
+      }
 
       trx->next_current_id();
       session_event->set_response("SUCCESS\n");

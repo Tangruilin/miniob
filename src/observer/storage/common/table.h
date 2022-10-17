@@ -64,8 +64,17 @@ public:
    * @return
    */
   RC insert_record(Trx *trx, int value_num, const Value *values);
-  RC update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num,
-      const Condition conditions[], int *updated_count);
+  /**
+   * update a record
+   * @param trx
+   * @param attribute_name the attribute's name which need to be updated
+   * @param value the attribute's after updating value
+   * @param condition_num condition num
+   * @param conditions conditions
+   * @param updated_count updated records count
+   * @return
+   */
+  RC update_record(Trx *trx, Record *record, const char *attribute_name, const Value *value) const;
   RC delete_record(Trx *trx, ConditionFilter *filter, int *deleted_count);
   RC delete_record(Trx *trx, Record *record);
   RC recover_delete_record(Record *record);

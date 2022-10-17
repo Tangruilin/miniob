@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/seda/stage.h"
 #include "sql/parser/parse.h"
 #include "rc.h"
+#include "sql/stmt/update_stmt.h"
 
 class SQLStageEvent;
 class SessionEvent;
@@ -61,10 +62,12 @@ protected:
   RC do_commit(SQLStageEvent *sql_event);
   RC do_clog_sync(SQLStageEvent *sql_event);
 
+  RC do_update(SQLStageEvent *sql_event);
 protected:
 private:
   Stage *default_storage_stage_ = nullptr;
   Stage *mem_storage_stage_ = nullptr;
+
 };
 
 #endif  //__OBSERVER_SQL_EXECUTE_STAGE_H__
