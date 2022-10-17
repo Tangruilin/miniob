@@ -34,7 +34,12 @@ Db::~Db()
   }
   LOG_INFO("Db has been closed: %s", name_.c_str());
 }
-
+/**
+ * Init database with db name and db file path
+ * @param name
+ * @param dbpath
+ * @return RC
+ */
 RC Db::init(const char *name, const char *dbpath)
 {
 
@@ -60,6 +65,13 @@ RC Db::init(const char *name, const char *dbpath)
   return open_all_tables();
 }
 
+/**
+ *
+ * @param table_name
+ * @param attribute_count
+ * @param attributes
+ * @return
+ */
 RC Db::create_table(const char *table_name, int attribute_count, const AttrInfo *attributes)
 {
   RC rc = RC::SUCCESS;
@@ -84,6 +96,31 @@ RC Db::create_table(const char *table_name, int attribute_count, const AttrInfo 
   return RC::SUCCESS;
 }
 
+RC Db::drop_table(const char *table_name)
+{
+  RC rc = RC::SUCCESS;
+  // check table opened
+  auto it = opened_tables_.find(table_name);
+  if (it == opened_tables_.end()) {
+    // table not exist
+    LOG_WARN("%s hasn't been open before.", table_name);
+    return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+
+  // get table
+  Table *table = it->second;
+  // let this table destroy itself
+  rc = table->destroy();
+  if (rc != SUCCESS) {
+    LOG_WARN("%s try to destroy itself failed", table_name);
+    return rc;
+  }
+  // remove this table from opened_tables
+  this->opened_tables_.erase(it);
+  delete table;
+  return rc;
+}
+
 Table *Db::find_table(const char *table_name) const
 {
   std::unordered_map<std::string, Table *>::const_iterator iter = opened_tables_.find(table_name);
@@ -105,6 +142,7 @@ RC Db::open_all_tables()
   RC rc = RC::SUCCESS;
   for (const std::string &filename : table_meta_files) {
     Table *table = new Table();
+    // open a table, load data from table file(xxx.table)
     rc = table->open(filename.c_str(), path_.c_str(), clog_manager_);
     if (rc != RC::SUCCESS) {
       delete table;
@@ -209,7 +247,7 @@ RC Db::recover()
         LOG_ERROR("Failed to recover. rc=%d:%s", rc, strrc(rc));
         break;
       }
-      
+
       if (max_trx_id < clog_record->get_trx_id()) {
         max_trx_id = clog_record->get_trx_id();
       }

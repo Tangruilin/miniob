@@ -42,6 +42,7 @@ RC TableMeta::init_sys_fields()
 {
   sys_fields_.reserve(1);
   FieldMeta field_meta;
+  // init trx firstly for every table
   RC rc = field_meta.init(Trx::trx_field_name(), Trx::trx_field_type(), 0, Trx::trx_field_len(), false);
   if (rc != RC::SUCCESS) {
     LOG_ERROR("Failed to init trx field. rc = %d:%s", rc, strrc(rc));
@@ -234,7 +235,7 @@ int TableMeta::deserialize(std::istream &is)
     LOG_ERROR("Failed to deserialize table meta. error=%s", errors.c_str());
     return -1;
   }
-
+  // parse table name
   const Json::Value &table_name_value = table_value[FIELD_TABLE_NAME];
   if (!table_name_value.isString()) {
     LOG_ERROR("Invalid table name. json value=%s", table_name_value.toStyledString().c_str());
@@ -243,6 +244,7 @@ int TableMeta::deserialize(std::istream &is)
 
   std::string table_name = table_name_value.asString();
 
+  // parse table fields
   const Json::Value &fields_value = table_value[FIELD_FIELDS];
   if (!fields_value.isArray() || fields_value.size() <= 0) {
     LOG_ERROR("Invalid table meta. fields is not array, json value=%s", fields_value.toStyledString().c_str());
@@ -251,10 +253,12 @@ int TableMeta::deserialize(std::istream &is)
 
   RC rc = RC::SUCCESS;
   int field_num = fields_value.size();
+  // all field about this table
   std::vector<FieldMeta> fields(field_num);
   for (int i = 0; i < field_num; i++) {
+    // generate field meta
     FieldMeta &field = fields[i];
-
+    // get field value
     const Json::Value &field_value = fields_value[i];
     rc = FieldMeta::from_json(field_value, field);
     if (rc != RC::SUCCESS) {
@@ -262,7 +266,7 @@ int TableMeta::deserialize(std::istream &is)
       return -1;
     }
   }
-
+  // sort by offset
   std::sort(
       fields.begin(), fields.end(), [](const FieldMeta &f1, const FieldMeta &f2) { return f1.offset() < f2.offset(); });
 
@@ -270,6 +274,7 @@ int TableMeta::deserialize(std::istream &is)
   fields_.swap(fields);
   record_size_ = fields_.back().offset() + fields_.back().len() - fields_.begin()->offset();
 
+  // parse indexes from json
   const Json::Value &indexes_value = table_value[FIELD_INDEXES];
   if (!indexes_value.empty()) {
     if (!indexes_value.isArray()) {
@@ -280,7 +285,7 @@ int TableMeta::deserialize(std::istream &is)
     std::vector<IndexMeta> indexes(index_num);
     for (int i = 0; i < index_num; i++) {
       IndexMeta &index = indexes[i];
-
+      // parse every index from json
       const Json::Value &index_value = indexes_value[i];
       rc = IndexMeta::from_json(*this, index_value, index);
       if (rc != RC::SUCCESS) {

@@ -29,7 +29,15 @@ class FieldMeta {
 public:
   FieldMeta();
   ~FieldMeta() = default;
-
+  /**
+   * Init a field with basic data
+   * @param name
+   * @param attr_type
+   * @param attr_offset
+   * @param attr_len
+   * @param visible
+   * @return
+   */
   RC init(const char *name, AttrType attr_type, int attr_offset, int attr_len, bool visible);
 
 public:
@@ -44,13 +52,24 @@ public:
 
 public:
   void to_json(Json::Value &json_value) const;
+  /**
+   * Parse table meta from json value
+   * @param json_value
+   * @param field
+   * @return
+   */
   static RC from_json(const Json::Value &json_value, FieldMeta &field);
 
 protected:
+  // field name
   std::string name_;
+  // field attribute type(undefined, chars, int, floats)
   AttrType attr_type_;
+  // attribute offset
   int attr_offset_;
+  // attribute length
   int attr_len_;
+  // visible for user
   bool visible_;
 };
 #endif  // __OBSERVER_STORAGE_COMMON_FIELD_META_H__

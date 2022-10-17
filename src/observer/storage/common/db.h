@@ -34,6 +34,8 @@ public:
 
   RC create_table(const char *table_name, int attribute_count, const AttrInfo *attributes);
 
+  RC drop_table(const char *table_name);
+
   Table *find_table(const char *table_name) const;
 
   const char *name() const;
@@ -50,8 +52,11 @@ private:
   RC open_all_tables();
 
 private:
+  // db name
   std::string name_;
+  // db store path
   std::string path_;
+  // opened tables
   std::unordered_map<std::string, Table *> opened_tables_;
   CLogManager *clog_manager_ = nullptr;
 };

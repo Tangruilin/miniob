@@ -118,7 +118,7 @@ private:
 
 class BPFrameId
 {
-public: 
+public:
   BPFrameId(int file_desc, PageNum page_num) :
     file_desc_(file_desc), page_num_(page_num)
   {}
@@ -213,6 +213,9 @@ class DiskBufferPool
 {
 public:
   DiskBufferPool(BufferPoolManager &bp_manager, BPFrameManager &frame_manager);
+  /**
+   * release mem usage and purge all pages in this bp
+   */
   ~DiskBufferPool();
 
   /**
@@ -290,6 +293,11 @@ public:
   RC recover_page(PageNum page_num);
 protected:
 protected:
+  /**
+   * allocate a frame in frame manasger
+   * @param buf
+   * @return
+   */
   RC allocate_frame(PageNum page_num, Frame **buf);
 
   /**
@@ -304,7 +312,9 @@ protected:
   RC load_page(PageNum page_num, Frame *frame);
 
 private:
+  // buffer pool manager pointer
   BufferPoolManager &bp_manager_;
+  // buffer pool frame manager
   BPFrameManager &   frame_manager_;
   std::string        file_name_;
   int                file_desc_ = -1;
@@ -323,6 +333,12 @@ public:
   ~BufferPoolManager();
 
   RC create_file(const char *file_name);
+  /**
+   * Open a file and attach it to target bp
+   * @param file_name table data file name
+   * @param bp diskBufferPool
+   * @return RC
+   */
   RC open_file(const char *file_name, DiskBufferPool *&bp);
   RC close_file(const char *file_name);
 

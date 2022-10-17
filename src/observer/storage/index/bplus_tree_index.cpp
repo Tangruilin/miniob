@@ -60,6 +60,7 @@ RC BplusTreeIndex::open(const char *file_name, const IndexMeta &index_meta, cons
 
   Index::init(index_meta, field_meta);
 
+  // load this index file, and generate buffer pool of this index, load BPFileHeader(first 8k of frame) and IndexFileHeader(second 8k of frame)
   RC rc = index_handler_.open(file_name);
   if (RC::SUCCESS != rc) {
     LOG_WARN("Failed to open index_handler, file_name:%s, index:%s, field:%s, rc:%s",
