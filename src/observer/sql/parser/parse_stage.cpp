@@ -128,7 +128,7 @@ RC ParseStage::handle_request(StageEvent *event)
     LOG_ERROR("Failed to create query.");
     return RC::INTERNAL;
   }
-
+  // parse sql and init the Query
   RC ret = parse(sql.c_str(), query_result);
   if (ret != RC::SUCCESS) {
     // set error information to event

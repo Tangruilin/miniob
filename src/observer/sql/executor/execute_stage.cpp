@@ -160,6 +160,9 @@ void ExecuteStage::handle_request(common::StageEvent *event)
     case SCF_CREATE_TABLE: {
       do_create_table(sql_event);
     } break;
+    case SCF_DROP_TABLE: {
+      do_drop_table(sql_event);
+    } break ;
     case SCF_CREATE_INDEX: {
       do_create_index(sql_event);
     } break;
@@ -170,7 +173,6 @@ void ExecuteStage::handle_request(common::StageEvent *event)
       do_desc_table(sql_event);
     } break;
 
-    case SCF_DROP_TABLE:
     case SCF_DROP_INDEX:
     case SCF_LOAD_DATA: {
       default_storage_stage_->handle_event(event);
@@ -454,6 +456,7 @@ RC ExecuteStage::do_help(SQLStageEvent *sql_event)
   const char *response = "show tables;\n"
                          "desc `table name`;\n"
                          "create table `table name` (`column name` `column type`, ...);\n"
+                         "drop table `table name`;\n"
                          "create index `index name` on `table` (`column`);\n"
                          "insert into `table` values(`value1`,`value2`);\n"
                          "update `table` set column=value [where `column`=`value`];\n"
@@ -474,6 +477,20 @@ RC ExecuteStage::do_create_table(SQLStageEvent *sql_event)
     session_event->set_response("SUCCESS\n");
   } else {
     session_event->set_response("FAILURE\n");
+  }
+  return rc;
+}
+
+RC ExecuteStage::do_drop_table(SQLStageEvent *sql_event)
+{
+  DropTable dropTable = sql_event->query()->sstr.drop_table;
+  SessionEvent *sessionEvent = sql_event->session_event();
+  Db *db = sessionEvent->session()->get_current_db();
+  RC rc = db->drop_table(dropTable.relation_name);
+  if (rc == SUCCESS) {
+    sessionEvent->set_response("SUCCESS\n");
+  } else {
+    sessionEvent->set_response("FAILURE\n");
   }
   return rc;
 }

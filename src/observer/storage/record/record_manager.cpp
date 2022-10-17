@@ -150,7 +150,7 @@ RC RecordPageHandler::init_empty_page(DiskBufferPool &buffer_pool, PageNum page_
   bitmap_ = frame_->data() + page_fix_size();
 
   memset(bitmap_, 0, page_bitmap_size(page_header_->record_capacity));
-  
+
   if ((ret = buffer_pool.flush_page(*frame_)) != RC::SUCCESS) {
     LOG_ERROR("Failed to flush page header %d:%d.", page_num);
     return ret;
@@ -366,6 +366,7 @@ RC RecordFileHandler::insert_record(const char *data, int record_size, RID *rid)
   PageNum current_page_num = 0;
   while (!free_pages_.empty()) {
     current_page_num = *free_pages_.begin();
+    // load this page from buffer pool
     ret = record_page_handler.init(*disk_buffer_pool_, current_page_num);
     if (ret != RC::SUCCESS) {
       LOG_WARN("failed to init record page handler. page num=%d, rc=%d:%s", current_page_num, ret, strrc(ret));
@@ -389,6 +390,7 @@ RC RecordFileHandler::insert_record(const char *data, int record_size, RID *rid)
     }
 
     current_page_num = frame->page_num();
+    // init a empty page
     ret = record_page_handler.init_empty_page(*disk_buffer_pool_, current_page_num, record_size);
     if (ret != RC::SUCCESS) {
       LOG_ERROR("Failed to init empty page. ret:%d", ret);

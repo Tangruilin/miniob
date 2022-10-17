@@ -56,6 +56,13 @@ public:
    */
   RC open(const char *meta_file, const char *base_dir, CLogManager *clog_manager);
 
+  /**
+   * Insert a record to this table
+   * @param trx
+   * @param value_num
+   * @param values
+   * @return
+   */
   RC insert_record(Trx *trx, int value_num, const Value *values);
   RC update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num,
       const Condition conditions[], int *updated_count);
@@ -69,6 +76,12 @@ public:
   RC create_index(Trx *trx, const char *index_name, const char *attribute_name);
 
   RC get_record_scanner(RecordFileScanner &scanner);
+
+  /**
+   * Release all mem usage and delete the table related file
+   * @return
+   */
+  RC destroy();
 
   RecordFileHandler *record_handler() const
   {
@@ -95,6 +108,13 @@ private:
       RC (*record_reader)(Record *record, void *context));
   IndexScanner *find_index_for_scan(const ConditionFilter *filter);
   IndexScanner *find_index_for_scan(const DefaultConditionFilter &filter);
+
+  /**
+   * Insert a record
+   * @param trx
+   * @param record
+   * @return
+   */
   RC insert_record(Trx *trx, Record *record);
 
 public:
@@ -108,6 +128,11 @@ private:
   RC delete_entry_of_indexes(const char *record, const RID &rid, bool error_on_not_exists);
 
 private:
+  /**
+   * Init records for this table from data file(tableName.data), and init some resource, such as buffer pool and frames...
+   * @param base_dir the base dir for this table
+   * @return RC
+   */
   RC init_record_handler(const char *base_dir);
   RC make_record(int value_num, const Value *values, char *&record_out);
 
@@ -116,11 +141,14 @@ public:
   Index *find_index_by_field(const char *field_name) const;
 
 private:
+  // table base dir
   std::string base_dir_;
   CLogManager *clog_manager_;
+  // table meta data, include field meta
   TableMeta table_meta_;
   DiskBufferPool *data_buffer_pool_ = nullptr;   /// 数据文件关联的buffer pool
   RecordFileHandler *record_handler_ = nullptr;  /// 记录操作
+  // indexes in this table
   std::vector<Index *> indexes_;
 };
 
