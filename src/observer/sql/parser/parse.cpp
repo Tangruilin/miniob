@@ -55,8 +55,37 @@ void value_init_float(Value *value, float v)
 void value_init_string(Value *value, const char *v)
 {
   value->type = CHARS;
+  LOG_INFO("date: %s", v);
   value->data = strdup(v);
 }
+
+bool check_date(int y, int m, int d)
+{
+  static int mon[]  = {0, 31, 28, 31, 30, 31
+                      ,30, 31, 31, 30, 31, 30, 31};
+  bool leap = (y%400 == 0 || (y%100 && y%4 == 0));
+  return y > 0
+        && (m > 0) && (m <= 12)
+        && (d > 0) && (d <= ((m==2 && leap) ? 1 : 0) + mon[m]);
+}
+
+int value_init_date(Value *value, const char *v)
+{
+  value->type = DATES;
+  int y,m,d;
+  sscanf(v, "'%d-%d-%d'", &y, &m, &d);  //lex 会通过正则表达式保证解析到的数据是满足这里的条件的
+  LOG_INFO("date: %s, y: %d, m: %d, d: %d", v, y, m, d);
+  if (!check_date(y, m, d))
+  {
+    LOG_WARN("date format is wrong, the date is %s", v);
+    return -1;
+  }
+  int dv = y * 10000 + m * 100 + d;
+  value->data = malloc(sizeof (dv));
+  memcpy(value->data, &dv, sizeof (dv));
+  return 0;
+}
+
 void value_destroy(Value *value)
 {
   value->type = UNDEFINED;
@@ -96,6 +125,7 @@ void condition_destroy(Condition *condition)
   }
 }
 
+//这个函数表示的是某一个表单初始化的时候的函数, 用来将单表的信息填上去, 对于 date 字段需要满足长度为 10 的要求
 void attr_info_init(AttrInfo *attr_info, const char *name, AttrType type, size_t length)
 {
   attr_info->name = strdup(name);
@@ -399,7 +429,7 @@ extern "C" int sql_parse(const char *st, Query *sqls);
 RC parse(const char *st, Query *sqln)
 {
   sql_parse(st, sqln);
-
+  LOG_INFO("flag: %d", sqln->flag);
   if (sqln->flag == SCF_ERROR)
     return SQL_SYNTAX;
   else
