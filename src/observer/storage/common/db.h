@@ -40,7 +40,9 @@ public:
 
   const char *name() const;
 
-  void all_tables(std::vector<std::string> &table_names) const;
+  void all_table_names(std::vector<std::string> &table_names) const;
+
+  void all_tables(std::vector<Table *> &tables) const;
 
   RC sync();
 

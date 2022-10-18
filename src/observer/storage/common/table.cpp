@@ -1027,3 +1027,11 @@ RC Table::sync()
   LOG_INFO("Sync table over. table=%s", name());
   return rc;
 }
+
+void Table::desc_index(std::ostream &os) const
+{
+  for (const auto &index : indexes_) {
+    os << name() << " | " << '1' << " | " << index->index_meta().name() << " | " << '1' << " | " << index->index_meta().field() << std::endl;
+  }
+}
+

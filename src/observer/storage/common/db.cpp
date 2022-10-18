@@ -171,10 +171,17 @@ const char *Db::name() const
   return name_.c_str();
 }
 
-void Db::all_tables(std::vector<std::string> &table_names) const
+void Db::all_table_names(std::vector<std::string> &table_names) const
 {
   for (const auto &table_item : opened_tables_) {
     table_names.emplace_back(table_item.first);
+  }
+}
+
+void Db::all_tables(std::vector<Table *> &tables) const
+{
+  for (const auto &table_item : opened_tables_) {
+    tables.emplace_back(table_item.second);
   }
 }
 

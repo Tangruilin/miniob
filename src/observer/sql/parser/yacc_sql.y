@@ -154,6 +154,7 @@ command:
 	| load_data
 	| help
 	| exit
+	| show_index
     ;
 
 exit:			
@@ -216,7 +217,13 @@ create_index:		/*create index 语句的语法解析树*/
 			create_index_init(&CONTEXT->ssql->sstr.create_index, $3, $5, $7);
 		}
     ;
-
+show_index:         /*show index 语句的语法解析树*/
+    SHOW INDEX FROM ID SEMICOLON
+        {
+            CONTEXT->ssql->flag = SCF_SHOW_INDEX;//"show index"
+               show_index_init(&CONTEXT->ssql->sstr.show_index, $4);
+        }
+    ;
 drop_index:			/*drop index 语句的语法解析树*/
     DROP INDEX ID  SEMICOLON 
 		{

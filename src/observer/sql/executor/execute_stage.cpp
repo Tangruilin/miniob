@@ -173,6 +173,9 @@ void ExecuteStage::handle_request(common::StageEvent *event)
     case SCF_DESC_TABLE: {
       do_desc_table(sql_event);
     } break;
+    case SCF_SHOW_INDEX: {
+      do_show_index(sql_event);
+    } break;
 
     case SCF_DROP_INDEX:
     case SCF_LOAD_DATA: {
@@ -516,7 +519,7 @@ RC ExecuteStage::do_show_tables(SQLStageEvent *sql_event)
   SessionEvent *session_event = sql_event->session_event();
   Db *db = session_event->session()->get_current_db();
   std::vector<std::string> all_tables;
-  db->all_tables(all_tables);
+  db->all_table_names(all_tables);
   if (all_tables.empty()) {
     session_event->set_response("No table\n");
   } else {
@@ -528,6 +531,26 @@ RC ExecuteStage::do_show_tables(SQLStageEvent *sql_event)
   }
   return RC::SUCCESS;
 }
+
+RC ExecuteStage::do_show_index(SQLStageEvent *sql_event)
+{
+  SessionEvent *session_event = sql_event->session_event();
+  Db *db = session_event->session()->get_current_db();
+  ShowIndex &show_index = sql_event->query()->sstr.show_index;
+  Table *table = db->find_table(show_index.relation_name);
+  if (table == nullptr) {
+    LOG_WARN("No such table : %s", show_index.relation_name);
+    sql_event->session_event()->set_response("FAILURE\n");
+    return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+  std::string header = "TABLE | NON_UNIQUE | KEY_NAME | SEQ_IN_INDEX | COLUMN_NAME";
+  std::stringstream  ss;
+  ss << header << std::endl;
+  table->desc_index(ss);
+  sql_event->session_event()->set_response(ss.str().c_str());
+  return RC::SUCCESS;
+}
+
 
 RC ExecuteStage::do_desc_table(SQLStageEvent *sql_event)
 {

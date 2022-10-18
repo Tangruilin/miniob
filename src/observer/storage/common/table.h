@@ -104,6 +104,8 @@ public:
 
   RC sync();
 
+  void desc_index(std::ostream &os) const;
+
 public:
   RC commit_insert(Trx *trx, const RID &rid);
   RC commit_delete(Trx *trx, const RID &rid);
