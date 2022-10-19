@@ -583,6 +583,7 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
   }
 
   InsertStmt *insert_stmt = (InsertStmt *)stmt;
+  LOG_INFO("Begin to do Insert stmt, the value_count is %d", insert_stmt->value_amount());
   Table *table = insert_stmt->table();
 
   RC rc = table->insert_record(trx, insert_stmt->value_amount(), insert_stmt->values());

@@ -360,18 +360,23 @@ RC Table::insert_record(Trx *trx, int value_num, const Value *values)
   }
 
   // get record bytes from values
-  char *record_data;
-  RC rc = make_record(value_num, values, record_data);
-  if (rc != RC::SUCCESS) {
-    LOG_ERROR("Failed to create a record. rc=%d:%s", rc, strrc(rc));
-    return rc;
-  }
+  //  在这里进行执行计划的分解, 如果要插入多条语句, 那多条语句的内容在这里分批进行创建
+  int field_num = table_meta_.field_num() - table_meta_.sys_field_num();
+  for (int offset = 0; offset < value_num; offset += field_num)
+  {
+    char *record_data;
+    RC rc = make_record(field_num, offset, values, record_data);
+    if (rc != RC::SUCCESS) {
+      LOG_ERROR("Failed to create a record. rc=%d:%s", rc, strrc(rc));
+      return rc;
+    }
 
-  Record record;
-  record.set_data(record_data);
-  rc = insert_record(trx, &record);
-  delete[] record_data;
-  return rc;
+    Record record;
+    record.set_data(record_data);
+    rc = insert_record(trx, &record);
+    delete[] record_data;
+  }
+  return RC::SUCCESS;
 }
 
 const char *Table::name() const
@@ -384,7 +389,7 @@ const TableMeta &Table::table_meta() const
   return table_meta_;
 }
 
-RC Table::make_record(int value_num, const Value *values, char *&record_out)
+RC Table::make_record(int value_num, int offset, const Value *values, char *&record_out)
 {
   // 检查字段类型是否一致
   if (value_num + table_meta_.sys_field_num() != table_meta_.field_num()) {
@@ -395,7 +400,7 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out)
   const int normal_field_start_index = table_meta_.sys_field_num();
   for (int i = 0; i < value_num; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
-    const Value &value = values[i];
+    const Value &value = values[i + offset];
     if (field->type() != value.type) {
       LOG_ERROR("Invalid value type. table name =%s, field name=%s, type=%d, but given=%d",
           table_meta_.name(),
@@ -412,7 +417,7 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out)
 
   for (int i = 0; i < value_num; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
-    const Value &value = values[i];
+    const Value &value = values[i + offset];
     size_t copy_len = field->len();
     if (field->type() == CHARS) {
       const size_t data_len = strlen((const char *)value.data);

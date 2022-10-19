@@ -145,7 +145,7 @@ private:
    * @return RC
    */
   RC init_record_handler(const char *base_dir);
-  RC make_record(int value_num, const Value *values, char *&record_out);
+  RC make_record(int value_num, int offset, const Value *values, char *&record_out);
 
 public:
   Index *find_index(const char *index_name) const;

@@ -289,7 +289,7 @@ ID_get:
 
 	
 insert:				/*insert   语句的语法解析树*/
-    INSERT INTO ID VALUES LBRACE value value_list RBRACE SEMICOLON 
+    INSERT INTO ID VALUES data_group data_group_list SEMICOLON
 		{
 			// CONTEXT->values[CONTEXT->value_length++] = *$6;
 
@@ -304,6 +304,18 @@ insert:				/*insert   语句的语法解析树*/
       //临时变量清零
       CONTEXT->value_length=0;
     }
+
+//	增加数据组的序列, 但是针对数据组
+data_group_list:
+	/* empty */
+	| COMMA data_group data_group_list {
+
+	}
+
+data_group:
+	LBRACE value value_list RBRACE {
+
+	}
 
 value_list:
     /* empty */

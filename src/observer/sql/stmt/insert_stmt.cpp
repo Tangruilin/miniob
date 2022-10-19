@@ -42,7 +42,8 @@ RC InsertStmt::create(Db *db, const Inserts &inserts, Stmt *&stmt)
   const int value_num = inserts.value_num;
   const TableMeta &table_meta = table->table_meta();
   const int field_num = table_meta.field_num() - table_meta.sys_field_num();
-  if (field_num != value_num) {
+//  如果需要支持多表的 Insert, 只需要满足 value_num 是 field_num 的整数倍就好了
+  if ((value_num % field_num ) != 0) {
     LOG_WARN("schema mismatch. value num=%d, field num in schema=%d", value_num, field_num);
     return RC::SCHEMA_FIELD_MISSING;
   }
@@ -50,13 +51,13 @@ RC InsertStmt::create(Db *db, const Inserts &inserts, Stmt *&stmt)
   // check fields type
   const int sys_field_num = table_meta.sys_field_num();
   for (int i = 0; i < value_num; i++) {
-    const FieldMeta *field_meta = table_meta.field(i + sys_field_num);
+    const FieldMeta *field_meta = table_meta.field((i % field_num) + sys_field_num);
     const AttrType field_type = field_meta->type();
     const AttrType value_type = values[i].type;
     if (field_type != value_type) { // TODO try to convert the value type to field type
       LOG_WARN("field type mismatch. table=%s, field=%s, field type=%d, value_type=%d", 
                table_name, field_meta->name(), field_type, value_type);
-      LOG_WARN("value is %d", *(int *)values[i].data);
+      LOG_WARN("value is %d", *(int *)values[i % field_num].data);
       return RC::SCHEMA_FIELD_TYPE_MISMATCH;
     }
   }
